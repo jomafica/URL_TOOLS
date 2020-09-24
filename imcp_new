@@ -57,7 +57,7 @@ if __name__ == "__main__":
         if not value:
             print(key, " - ", "No IP resolution")
         else:
-            #colocar timeout no head
+            #colocar timeout no heads
             head = workers_F(url_head, url)
             response = ping(str(value), count=1, timeout=0.3)
             if head[key] is not False:
