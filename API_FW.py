@@ -1,10 +1,11 @@
 import socket
 import json
 import requests
-#  Example https://10.36.0.57/api/v2/monitor/system/interface/?access_token=xwd8y3fb7QNf9HcGtNnm5NrGG5ky31
+#  Example https://IP/api/v2/monitor/system/interface/?access_token=xwd8y3fb7QNf9HcGtNnm5NrGG5ky31
 
+ip = input("IP: ")
 token = "?access_token=xwd8y3fb7QNf9HcGtNnm5NrGG5ky31"
-url = "https://10.36.0.57/api/v2/monitor/"
+url = "https://" + str(ip) + "/api/v2/monitor/"
 system_usage = "system/resource/usage/"
 system_time = "system/time/"
 system_vresource = "system/vdom-resource/"

@@ -50,8 +50,8 @@ if __name__ == "__main__":
         lines = re.sub(r'(http://)', r'', lines)
         lines = re.sub(r'(www.)(?!com)', r'', lines)
         urls = [url.split('/')[0] for url in lines.split()]
+
     get_ip = workers_F(dns_resolution, urls)
-    #print(get_ip)
 
     for key, value in results.items():
         url = [key]
