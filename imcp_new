@@ -27,7 +27,8 @@ def dns_resolution(domain):
 def url_head(url):
     global results
     try:
-        results[url] = requests.head(url)
+        results[url] = requests.head(url, timeout=1)
+        #print(results)
         return results
     except requests.exceptions.ConnectionError:
         results[url] = False
@@ -36,6 +37,7 @@ def workers_F(func_to_call, arg):
     global results
     with concurrent.futures.ThreadPoolExecutor() as executer:
         answer = executer.map(func_to_call, arg)
+        executer.shutdown(wait=False)
         for i in answer:
             results = i
     return results
@@ -49,6 +51,7 @@ if __name__ == "__main__":
         lines = re.sub(r'(www.)(?!com)', r'', lines)
         urls = [url.split('/')[0] for url in lines.split()]
     get_ip = workers_F(dns_resolution, urls)
+    #print(get_ip)
 
     for key, value in results.items():
         url = [key]
@@ -60,3 +63,5 @@ if __name__ == "__main__":
             response = ping(str(value), count=1, timeout=0.3)
             if head[key] is not False:
                 print(key, " - ", "Can ping: ", response.is_alive, " - ", str(head[key].status_code), response_header(int(head[key].status_code)))
+            else:
+                print(key, " - Timeout")
