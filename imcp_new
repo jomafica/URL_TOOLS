@@ -1,6 +1,4 @@
 import re
-from typing import Any, Iterator
-
 from icmplib import ping
 import socket
 import requests
