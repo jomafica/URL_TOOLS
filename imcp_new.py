@@ -19,7 +19,7 @@ def dns_resolution(domain):
     try:
         data = socket.gethostbyname(domain)
         ip = str(data)
-        regex = re.search(r"\.[a-zA-Z]+\.", domain)
+        regex = re.search(r"\.[\w]+\.", domain)
         if not regex:
             results["https://www." + domain] = ip
         else:
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             head = workers_F(url_head, url)
             response = ping(str(value), count=1, timeout=0.3)
             if head[key] is not False:
-                print(key, " - ", "Can ping: ", response.is_alive, " - ", str(head[key].status_code),
+                print(key, " - ", "Can ping: ", value, response.is_alive, " - ", str(head[key].status_code),
                       response_header(int(head[key].status_code)))
             else:
                 print(key, "- Timeout")
