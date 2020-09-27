@@ -19,11 +19,11 @@ def dns_resolution(domain):
     try:
         data = socket.gethostbyname(domain)
         ip = str(data)
-        if domain == re.match(('\.\w\.*'), domain):
-            #VALIDAR ESTA REGEX
-            results["https://" + domain] = ip
-        else:
+        regex = re.search(r"\.[a-zA-Z]+\.", domain)
+        if not regex:
             results["https://www." + domain] = ip
+        else:
+            results["https://" + regex.string] = ip
         return results
     except Exception:
         results["https://www." + domain] = False
