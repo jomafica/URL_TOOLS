@@ -12,8 +12,6 @@ def response_header(id):
     for key in switcher:
         if type(key) is range and id in key:
             return switcher[key]
-
-
 def dns_resolution(domain):
     global results
     try:
@@ -28,8 +26,6 @@ def dns_resolution(domain):
     except Exception:
         results["https://www." + domain] = False
         return results
-
-
 def url_head(url):
     global results
     try:
@@ -38,20 +34,24 @@ def url_head(url):
     except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
         results[url] = False
         return results
-
-
 def workers_F(func_to_call, arg):
     global results
     with concurrent.futures.ThreadPoolExecutor() as executer:
         answer = executer.map(func_to_call, arg)
-        executer.shutdown(wait=False)
+        executer.shutdown(wait=True)
         for i in answer:
             results = i
     return results
 
+'''TODO
+- add progress bar
+- update screen when all the work ir done
+'''
+
 
 if __name__ == "__main__":
     results = {}
+    tic = time.perf_counter()
     with open("domain.txt", "r") as f:
         lines = f.read()
         lines = re.sub(r'(https://)', r'', lines)
@@ -60,10 +60,7 @@ if __name__ == "__main__":
         urls_all = [url.split('/')[0] for url in lines.split()]
         urls = list(dict.fromkeys(urls_all))
 
-    tic = time.perf_counter()
     get_ip = workers_F(dns_resolution, urls)
-    toc = time.perf_counter()
-    print(f"It took {toc - tic:0.4f} seconds")
 
     for key, value in results.items():
         url = [key]
@@ -77,3 +74,6 @@ if __name__ == "__main__":
                       response_header(int(head[key].status_code)))
             else:
                 print(key, "- Timeout")
+    toc = time.perf_counter()
+    print("-------------------------------------------------------------------------------------------------------------")
+    print(f"It took {toc - tic:0.4f} seconds")
