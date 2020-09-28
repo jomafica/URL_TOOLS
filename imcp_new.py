@@ -1,6 +1,6 @@
+from tqdm import tqdm
 import re, socket, requests, time, concurrent.futures
 from icmplib import ping
-
 
 def response_header(id):
     switcher = {
@@ -12,47 +12,57 @@ def response_header(id):
     for key in switcher:
         if type(key) is range and id in key:
             return switcher[key]
+
+#DOMAIN TO IP
 def dns_resolution(domain):
     global results
     try:
         data = socket.gethostbyname(domain)
         ip = str(data)
-        regex = re.search(r"\.[\w]+\.", domain)
+        regex = re.search(r"\w+\.[\w]+\.\w+", domain)
         if not regex:
             results["https://www." + domain] = ip
         else:
             results["https://" + regex.string] = ip
-        return results
     except Exception:
         results["https://www." + domain] = False
-        return results
-def url_head(url):
+    return results
+def workers_list(func_to_call, arg):
     global results
-    try:
-        results[url] = requests.head(url, timeout=1)
-        return results
-    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
-        results[url] = False
-        return results
-def workers_F(func_to_call, arg):
-    global results
-    with concurrent.futures.ThreadPoolExecutor() as executer:
-        answer = executer.map(func_to_call, arg)
-        executer.shutdown(wait=True)
-        for i in answer:
-            results = i
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        answer = {executor.submit(func_to_call, a) for a in arg}
+        done, _ = concurrent.futures.wait(answer, return_when=concurrent.futures.ALL_COMPLETED)
+        while not done:
+            for fut in done:
+                results = fut.result()
+        executor.shutdown(wait=True)
     return results
 
-'''TODO
-- add progress bar
-- update screen when all the work ir done
-'''
-
+#HEAD TO THE URL
+def url_head(url):
+    try:
+        heads = requests.head(url, timeout=1)
+        return heads.status_code
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout, UnicodeError):
+        heads = False
+        return heads
+def workers_head(func_to_call, arg):
+    for key, value in tqdm(arg.items(), desc="Loading"):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            answer = {executor.submit(func_to_call, key)}
+            done, _ = concurrent.futures.wait(answer, return_when=concurrent.futures.ALL_COMPLETED)
+            for fut in done:
+                results[key] = [results[key], fut.result()]
+        executor.shutdown(wait=True)
+    return results
 
 if __name__ == "__main__":
     results = {}
+
+    #Start performance timer
     tic = time.perf_counter()
-    with open("domain.txt", "r") as f:
+
+    with open("dom", "r") as f:
         lines = f.read()
         lines = re.sub(r'(https://)', r'', lines)
         lines = re.sub(r'(http://)', r'', lines)
@@ -60,20 +70,22 @@ if __name__ == "__main__":
         urls_all = [url.split('/')[0] for url in lines.split()]
         urls = list(dict.fromkeys(urls_all))
 
-    get_ip = workers_F(dns_resolution, urls)
+    get_ip = workers_list(dns_resolution, urls)
+    head = workers_head(url_head, results)
 
+    print("-----------------------------------------------------------------------------------------------------------")
     for key, value in results.items():
         url = [key]
-        if not value:
+        if not value[0]:
             print(key, " - ", "No IP resolution")
         else:
-            head = workers_F(url_head, url)
-            response = ping(str(value), count=1, timeout=0.3)
-            if head[key] is not False:
-                print(key, " - ", "Can ping: ", value, response.is_alive, " - ", str(head[key].status_code),
-                      response_header(int(head[key].status_code)))
+            response = ping(str(value[0]), count=1, timeout=0.3)
+            if value[1] is not False:
+                print(key, " - ", "Can ping: ", value[0], response.is_alive, " - ", value[1], response_header(value[1]))
             else:
                 print(key, "- Timeout")
     toc = time.perf_counter()
-    print("-------------------------------------------------------------------------------------------------------------")
+    print("-----------------------------------------------------------------------------------------------------------")
     print(f"It took {toc - tic:0.4f} seconds")
+
+
