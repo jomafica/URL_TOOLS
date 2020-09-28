@@ -56,13 +56,19 @@ def workers_head(func_to_call, arg):
         executor.shutdown(wait=True)
     return results
 
+'''
+- melhorar regex
+- class para os workers
+- unificar workers num so
+'''
+
 if __name__ == "__main__":
     results = {}
 
     #Start performance timer
     tic = time.perf_counter()
 
-    with open("dom", "r") as f:
+    with open("domain.txt", "r") as f:
         lines = f.read()
         lines = re.sub(r'(https://)', r'', lines)
         lines = re.sub(r'(http://)', r'', lines)
@@ -77,13 +83,13 @@ if __name__ == "__main__":
     for key, value in results.items():
         url = [key]
         if not value[0]:
-            print(key, " - ", "No IP resolution")
+            print("{:25}".format(key), "-", "No IP resolution")
         else:
             response = ping(str(value[0]), count=1, timeout=0.3)
             if value[1] is not False:
-                print(key, " - ", "Can ping: ", value[0], response.is_alive, " - ", value[1], response_header(value[1]))
+                print("{:25}".format(key), "-", "Can ping: ", value[0], response.is_alive, "-", value[1], response_header(value[1]))
             else:
-                print(key, "- Timeout")
+                print("{:26}".format(key), "- Timeout")
     toc = time.perf_counter()
     print("-----------------------------------------------------------------------------------------------------------")
     print(f"It took {toc - tic:0.4f} seconds")
