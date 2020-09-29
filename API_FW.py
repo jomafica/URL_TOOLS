@@ -1,4 +1,4 @@
-import requests, json
+import requests, json, time
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 
@@ -10,7 +10,7 @@ def iterate_dict(values):
             json_line = {}
             if isinstance(value, dict):
                 json_line["measurement"] = key
-                json_line["tags"] = {'FirewallName': 'XPTO'}
+                json_line["tags"] = {'FirewallN': '501E'}
                 tags = {}
                 for keyx, valuex in value.items():
                     tags[keyx] = valuex
@@ -31,6 +31,7 @@ def main():
 
 
 if __name__ == "__main__":
+
     token = "wZHGNmVTp7yZWBm3abuTgmLEiCzDOcVdfw1EndTcefGxi5LHX9sy6uMKv5NoFDaiE2RCIrx-lsu1iSiU7afWOg=="
     org = "c3c0eae17214c20e"
     bucket = "8ef9a01e310a0902"
@@ -43,8 +44,10 @@ if __name__ == "__main__":
     system_time = "system/time/"
     system_vresource = "system/vdom-resource/"
 
-    response = requests.get(url + system_vresource + token, verify=False, )
+    response = requests.get(url + system_vresource + token, verify=False)
     jparsed_dic = json.loads(response.content)
-
     parsed_json = {}
-    main()
+
+    while response.status_code == 200:
+        main()
+        time.sleep(5)
