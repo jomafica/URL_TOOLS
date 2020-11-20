@@ -57,7 +57,7 @@ def data_collection(data):
             json_line["content"] = json_underline
             json_body_temp.append(json_line)
 
-    #Remove duplicates    
+    #Remove duplicates s   
     for i in range(len(json_body_temp)): 
         if json_body_temp[i] not in json_body_temp[i + 1:]: 
             json_body.append(json_body_temp[i]) 
