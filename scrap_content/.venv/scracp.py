@@ -13,7 +13,7 @@ def data_collection(data):
         json_line = {}
         json_underline = {}
 
-        # regex para filtrar o conteudo
+        # regex para filtrar o conteudoo
         regex_id = re.search(r'(?<=(id\=\"))[^\"]*.*?', str(art))
         title = re.search(r'(?<=(title\=\"))[^\"]*.*?', str(art))
         url_art = art.find("a", attrs={"title" : re.compile('')})
