@@ -1,6 +1,7 @@
 import requests, json, re, flask
 from bs4 import BeautifulSoup
 from flask import request, jsonify
+from urllib.parse import urlparse
 
 def data_collection(data):
 
@@ -68,24 +69,36 @@ if __name__ == "__main__":
 
     app = flask.Flask(__name__)
     #app.config["DEBUG"] = True
+    id_page = int()
+    url = urlparse("https://pplware.sapo.pt")
 
-    url = "https://pplware.sapo.pt"
+    ##@app.route('/', methods=['GET'])
+    ##def home():
+    ##    return '''<h1>Works</h1>'''
 
-    r = requests.get(url)
-    parse = BeautifulSoup(r.content, 'html.parser')
-    data = parse('article')
+    @app.route('/api/v1/resource/main', methods=['GET'])
+    def api_main():
+        r = requests.get(url.geturl())
+        parse = BeautifulSoup(r.content, 'html.parser')
+        data = parse('article')
 
-    jbody = data_collection(data)
-    jdumps = json.dumps(jbody, ensure_ascii=False, indent=4, separators=(',', ': ')).encode('utf8')
-
-    @app.route('/', methods=['GET'])
-    def home():
-        return '''<h1>Test</h1>
-    <p>test</p>'''
-
-    @app.route('/api/v1/resources/all', methods=['GET'])
-    def api_all():
+        jbody = data_collection(data)
+        jdumps = json.dumps(jbody, ensure_ascii=False, indent=4, separators=(',', ': ')).encode('utf8')
         return jdumps
+
+    @app.route('/api/v1/resource/<int:idPage>', methods=['GET'])
+    def api_page(idPage):
+        id_page = str(idPage)
+        url_completed = "https://pplware.sapo.pt/page/" + id_page + "/"
+        next_page_url = urlparse(url_completed)
+        r = requests.get(next_page_url.geturl())
+        parse = BeautifulSoup(r.content, 'html.parser')
+        data = parse('article')
+
+        jbody = data_collection(data)
+        jdumps = json.dumps(jbody, ensure_ascii=False, indent=4, separators=(',', ': ')).encode('utf8')
+        return jdumps
+
     app.run()
 
         
