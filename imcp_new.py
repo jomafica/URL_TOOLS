@@ -56,12 +56,6 @@ def workers_head(func_to_call, arg):
         executor.shutdown(wait=True)
     return results
 
-'''
-- melhorar regex
-- class para os workers
-- unificar workers num so
-'''
-
 if __name__ == "__main__":
     results = {}
 
@@ -83,11 +77,11 @@ if __name__ == "__main__":
     for key, value in results.items():
         url = [key]
         if not value[0]:
-            print("{:25}".format(key), "-", "No IP resolution")
+            print("{:25}".format(key), " -", "No IP resolution")
         else:
             response = ping(str(value[0]), count=1, timeout=0.3)
             if value[1] is not False:
-                print("{:25}".format(key), "-", "Can ping: ", value[0], response.is_alive, "-", value[1], response_header(value[1]))
+                print("{:25}".format(key), " -", "Can ping:", "\033[0;32;92m" + value[0] + "\033[0m", response.is_alive, "-", value[1], response_header(value[1]))
             else:
                 print("{:26}".format(key), "- Timeout")
     toc = time.perf_counter()
