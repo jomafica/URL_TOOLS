@@ -72,10 +72,6 @@ if __name__ == "__main__":
     id_page = int()
     url = urlparse("https://pplware.sapo.pt")
 
-    ##@app.route('/', methods=['GET'])
-    ##def home():
-    ##    return '''<h1>Works</h1>'''
-
     @app.route('/api/v1/resource/main', methods=['GET'])
     def api_main():
         r = requests.get(url.geturl())
