@@ -1,6 +1,6 @@
-
 import re, time, os.path, re
 import pandas as pd
+from argparse import ArgumentParser, ArgumentTypeError
 
 def path():
     direct = "\\Result"
@@ -10,9 +10,9 @@ def path():
     try:
        os.mkdir(path)
     except FileExistsError:
-        print ("Directory already exist")
+        print ("Directory already exist: " + direct)
     else:
-        print ("Directory created" )
+        print ("Directory created at: " + path )
     return path
 def fileName():
     named_tuple = time.localtime() 
@@ -63,11 +63,26 @@ def create_excel(MSTinv,SMLinv,inlist,ninlist,fileNa):
     df = pd.DataFrame({'NOT_IN_LIST': ninlist})
     df.to_excel(writer, sheet_name='Final results', startcol=1, index=False)
     writer.save()
-
+    print("\nFile " + fileNa + " created")
+def valid_ext(ext):
+    regex = re.search(r'\.txt', ext)
+    if not regex:
+        raise ArgumentTypeError('mode must add the extension txt')
+    return ext
+def args():
+    args = ArgumentParser()
+    args.add_argument('MasterList', help='Name the Master file plus the extension', type=valid_ext)
+    args.add_argument('SmallList', help='Name the Small file plus the extension', type=valid_ext)
+    return args.parse_args()
 
 if __name__  == "__main__":
-    ltuple = open_Mfile("ipSN.txt") # Change name for the Master INV
-    ltuple2 = open_sfile("ip.txt") # Small INV
+
+    arugments = args()
+    Mfile = arugments.MasterList
+    Sfile = arugments.SmallList
+
+    ltuple = open_Mfile(Mfile) # Change name for the Master INV
+    ltuple2 = open_sfile(Sfile) # Small INV
     file_name = fileName() #Generate File name
     list_inc = search_find()
     linc2 = list_diff(list_inc,ltuple2)
