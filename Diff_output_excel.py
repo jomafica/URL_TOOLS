@@ -1,4 +1,4 @@
-import re, time, os.path, re
+import re, time, os.path, sys
 import pandas as pd
 from argparse import ArgumentParser, ArgumentTypeError
 
@@ -22,16 +22,25 @@ def fileName():
     return cname_FO
 def open_Mfile(file_name):
     list_tuple = []
-    with open(file_name, 'r') as read_obj:
-        for line in read_obj:
-            list_tuple.append(line.strip())
-    return list_tuple
+    try:
+        with open(file_name, 'r') as read_obj:
+            for line in read_obj:
+                before_append = re.sub(r'\t',r',', line)
+                list_tuple.append(before_append.strip())
+        return list_tuple
+    except:
+        print("Master file not found")
+        sys.exit(1)
 def open_sfile(file_name):
     list_tuple1 = []
-    with open(file_name, 'r') as read_obj:
-        for line in read_obj:
-            list_tuple1.append(line.strip())
-    return list_tuple1
+    try:
+        with open(file_name, 'r') as read_obj:
+            for line in read_obj:
+                list_tuple1.append(line.strip())
+        return list_tuple1
+    except:
+        print("Small file not found")
+        sys.exit(1)
 def Diff(li1, li2):
     return (list(list(set(li1)-set(li2)) + list(set(li2)-set(li1))))
 def search_find():
@@ -58,9 +67,9 @@ def create_excel(MSTinv,SMLinv,inlist,ninlist,fileNa):
     df = pd.DataFrame({'Small INV': SMLinv})
     df.to_excel(writer, sheet_name='Current Data', startcol=1, index=False)
     #Second sheet
-    df = pd.DataFrame({'IN_LIST': inlist})
+    df = pd.DataFrame({'IN_MST_LIST': inlist})
     df.to_excel(writer, sheet_name='Final results', index=False)
-    df = pd.DataFrame({'NOT_IN_LIST': ninlist})
+    df = pd.DataFrame({'NOT_IN_MST_LIST': ninlist})
     df.to_excel(writer, sheet_name='Final results', startcol=1, index=False)
     writer.save()
     print("\nFile " + fileNa + " created")
@@ -81,10 +90,10 @@ if __name__  == "__main__":
     Mfile = arugments.MasterList
     Sfile = arugments.SmallList
 
-    ltuple = open_Mfile(Mfile) # Change name for the Master INV
+    ltuple = open_Mfile(Mfile) # Master INV
     ltuple2 = open_sfile(Sfile) # Small INV
+
     file_name = fileName() #Generate File name
     list_inc = search_find()
     linc2 = list_diff(list_inc,ltuple2)
     create_excel(ltuple,ltuple2,list_inc,linc2,file_name)
-
