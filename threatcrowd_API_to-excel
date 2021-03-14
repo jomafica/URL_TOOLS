@@ -1,0 +1,184 @@
+import re, time, os.path, sys, requests, time, json
+import pandas as pd
+from argparse import ArgumentParser, ArgumentTypeError
+from tqdm import tqdm
+
+def path():
+    direct = "\\Result"
+    currentdir = os.getcwd()
+    path = currentdir + direct
+
+    try:
+       os.mkdir(path)
+    except FileExistsError:
+        print ("Directory already exist: " + direct)
+    else:
+        print ("Directory created at: " + path )
+    return path
+def fileName():
+    named_tuple = time.localtime() 
+    save_path = path()
+    FO_name = time.strftime("Output_%m-%d-%Y_%H-%M-%S", named_tuple)
+    cname_FO = os.path.join(save_path, FO_name + ".xlsx")
+    return cname_FO
+def open_iplist(file_name):
+    try:
+        pos = 0
+        idlst = []
+        iplst = []
+        answer = []
+        with open(file_name, 'r') as handle:
+            for ip in tqdm(handle):
+                pos += 1
+                idlst.append(pos)
+                csv["id"] = idlst
+                iplst.append(ip.strip())
+                csv["ip"] = iplst
+                result =  requests.get("https://www.threatcrowd.org/searchApi/v2/ip/report/?", params = {"ip": ip})
+                answer.append(json.loads(result.content))
+                resultss(answer)
+                time.sleep(3)
+    except:
+        print("Ip list file not found")
+        sys.exit(1)
+def resultss(r_answer):
+
+    lstresolv = []
+    lstresolv2 = []
+    lstresolv3 = []
+    dom = []
+    dom2 = []
+    dom3 = []
+    avhashes = []
+    avhashes2 = []
+    avhashes3 = []
+    permalink =[]
+
+    if isinstance(r_answer, list):
+        for x in r_answer:
+            for k,v in x.items():
+                if k == "resolutions":
+                    temp_list = []
+                    for l in v:
+                        temp = l.values()
+                        for o in temp:
+                            temp_list.append(o)
+                    if len(v) >= 3:
+                        lstresolv.append(temp_list[0])
+                        csv["Last_resolved"] = lstresolv
+                        dom.append(temp_list[1])
+                        csv["domain"] = dom
+                        lstresolv2.append(temp_list[2])
+                        csv["Last_resolved2"] = lstresolv2
+                        dom2.append(temp_list[3])
+                        csv["domain2"] = dom2
+                        lstresolv3.append(temp_list[4])
+                        csv["Last_resolved3"] = lstresolv3
+                        dom3.append(temp_list[5])
+                        csv["domain3"] = dom3   
+                    else:
+                        if len(v) == 2:
+                            lstresolv.append(temp_list[0])
+                            csv["Last_resolved"] = lstresolv
+                            dom.append(temp_list[1])
+                            csv["domain"] = dom
+                            lstresolv2.append(temp_list[2])
+                            csv["Last_resolved2"] = lstresolv2
+                            dom2.append(temp_list[3])
+                            csv["domain2"] = dom2
+                            lstresolv3.append("none")
+                            csv["Last_resolved3"] = lstresolv3
+                            dom3.append("none")
+                            csv["domain3"] = dom3    
+                        elif len(v) == 1: 
+                            lstresolv.append(temp_list[0])
+                            csv["Last_resolved"] = lstresolv
+                            dom.append(temp_list[1])
+                            csv["domain"] = dom
+                            lstresolv2.append("none")
+                            csv["Last_resolved2"] = lstresolv2
+                            dom2.append("none")
+                            csv["domain2"] = dom2
+                            lstresolv3.append("none")
+                            csv["Last_resolved3"] = lstresolv3
+                            dom3.append("none")
+                            csv["domain3"] = dom3   
+                        else:
+                            lstresolv.append("none")
+                            csv["Last_resolved"] = lstresolv
+                            dom.append("none")
+                            csv["domain"] = dom
+                            lstresolv2.append("none")
+                            csv["Last_resolved2"] = lstresolv2
+                            dom2.append("none")
+                            csv["domain2"] = dom2
+                            lstresolv3.append("none")
+                            csv["Last_resolved3"] = lstresolv3
+                            dom3.append("none")
+                            csv["domain3"] = dom3   
+                if k == "hashes":
+                    temp_list = []
+                    for l in v:
+                        temp = l.values()
+                        for o in temp:
+                            temp_list.append(o)
+                    if len(v) >= 3:
+                        avhashes.append(temp_list[0])
+                        csv["Hashe"] = avhashes
+                        avhashes2.append(temp_list[1])
+                        csv["Hashe2"] = avhashes2
+                        avhashes3.append(temp_list[2])
+                        csv["Hashe3"] = avhashes3
+                    else:
+                        if len(v) == 2:
+                            avhashes.append(temp_list[0])
+                            csv["Hashe"] = avhashes
+                            avhashes2.append(temp_list[1])
+                            csv["Hashe2"] = avhashes2
+                            avhashes3.append("none")
+                            csv["Hashe3"] = avhashes3
+                        elif len(v) == 1: 
+                            avhashes.append(temp_list[0])
+                            csv["Hashe"] = avhashes
+                            avhashes2.append("none")
+                            csv["Hashe2"] = avhashes2
+                            avhashes3.append("none")
+                            csv["Hashe3"] = avhashes3
+                        else:
+                            avhashes.append("none")
+                            csv["Hashe"] = avhashes
+                            avhashes2.append("none")
+                            csv["Hashe2"] = avhashes2
+                            avhashes3.append("none")
+                            csv["Hashe3"] = avhashes3
+                if k == "permalink":
+                    permalink.append(v)
+                    csv["permalink"] = permalink 
+def create_excel(MSTinv,fileNa):
+    writer = pd.ExcelWriter(fileNa, engine='xlsxwriter')
+    df = pd.DataFrame(csv)
+    df.to_excel(writer, sheet_name='Final results', index=False)               
+    writer.save()
+    print("\nFile " + fileNa + " created")
+
+def valid_ext(ext):
+    regex = re.search(r'\.txt', ext)
+    if not regex:
+        raise ArgumentTypeError('mode must add the extension txt')
+    return ext
+def args():
+    args = ArgumentParser()
+    args.add_argument('iplist', help='Name the IP_list file plus the extension', type=valid_ext)
+    return args.parse_args()
+
+if __name__  == "__main__":
+    
+    csv = {}
+    arugments = args()
+    ip_ist = arugments.iplist #accepted arguments
+
+    ltuple = open_iplist(ip_ist) # read list and save ip's
+
+    file_name = fileName() #Generate File name
+
+    create_excel(ltuple,file_name)
