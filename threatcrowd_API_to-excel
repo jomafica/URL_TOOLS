@@ -23,24 +23,40 @@ def fileName():
     return cname_FO
 def open_iplist(file_name):
     try:
-        pos = 0
-        idlst = []
-        iplst = []
-        answer = []
-        with open(file_name, 'r') as handle:
-            for ip in tqdm(handle):
-                pos += 1
-                idlst.append(pos)
-                csv["id"] = idlst
-                iplst.append(ip.strip())
-                csv["ip"] = iplst
-                result =  requests.get("https://www.threatcrowd.org/searchApi/v2/ip/report/?", params = {"ip": ip})
-                answer.append(json.loads(result.content))
-                resultss(answer)
-                time.sleep(3)
-    except:
-        print("Ip list file not found")
+        with open(file_name, 'r', encoding="UTF-8") as handle:
+            Handle_request(handle)
+    except Exception as e:
+        print(e)
         sys.exit(1)
+def Handle_request(file_to_handle):
+    pos = 0
+    idlst = []
+    iplst = []
+    resp_code = {}
+    answer = []
+    lines = file_to_handle.readlines()
+    for ip in tqdm(lines):
+        pos += 1
+        idlst.append(pos)
+        csv["id"] = idlst
+        iplst.append(ip.strip())
+        csv["ip"] = iplst
+        result = requests.get("https://www.threatcrowd.org/searchApi/v2/ip/report/?", params = {"ip": ip.strip()})
+        try:
+            if result.json() != {}:
+                resp_code = json.loads(result.content)
+                for k, v in resp_code.items():
+                    if k == "response_code":
+                        if v == 1:
+                            print("I'm here")
+                            answer.append(json.loads(result.content))
+                            resultss(answer)
+                            time.sleep(0.3)
+                        else:
+                            print("\nStatus code: " + v + " ip: " + ip)
+        except Exception as e:
+            print(e)
+
 def resultss(r_answer):
 
     lstresolv = []
@@ -153,14 +169,12 @@ def resultss(r_answer):
                             csv["Hashe3"] = avhashes3
                 if k == "permalink":
                     permalink.append(v)
-                    csv["permalink"] = permalink 
-def create_excel(MSTinv,fileNa):
-    writer = pd.ExcelWriter(fileNa, engine='xlsxwriter')
-    df = pd.DataFrame(csv)
-    df.to_excel(writer, sheet_name='Final results', index=False)               
-    writer.save()
+                    csv["permalink"] = permalink
+def create_excel(fileNa):
+    with pd.ExcelWriter(fileNa, engine='xlsxwriter') as writer: # pylint: disable=abstract-class-instantiated
+        df = pd.DataFrame(csv)
+        df.to_excel(writer, sheet_name='Final results', index=False)               
     print("\nFile " + fileNa + " created")
-
 def valid_ext(ext):
     regex = re.search(r'\.txt', ext)
     if not regex:
@@ -172,13 +186,11 @@ def args():
     return args.parse_args()
 
 if __name__  == "__main__":
-    
+
     csv = {}
     arugments = args()
     ip_ist = arugments.iplist #accepted arguments
-
-    ltuple = open_iplist(ip_ist) # read list and save ip's
-
+    open_iplist(ip_ist) # read list and save ip's
     file_name = fileName() #Generate File name
-
-    create_excel(ltuple,file_name)
+    create_excel(file_name)
+    
