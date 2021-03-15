@@ -37,26 +37,25 @@ def Handle_request(file_to_handle):
     lines = file_to_handle.readlines()
     for ip in tqdm(lines):
         pos += 1
-        idlst.append(pos)
-        csv["id"] = idlst
-        iplst.append(ip.strip())
-        csv["ip"] = iplst
+        time.sleep(10)
         result = requests.get("https://www.threatcrowd.org/searchApi/v2/ip/report/?", params = {"ip": ip.strip()})
         try:
             if result.json() != {}:
                 resp_code = json.loads(result.content)
                 for k, v in resp_code.items():
                     if k == "response_code":
-                        if v == 1:
-                            print("I'm here")
+                        if v == str(1):
+                            idlst.append(pos)
+                            csv["id"] = idlst
+                            iplst.append(ip.strip())
+                            csv["ip"] = iplst
                             answer.append(json.loads(result.content))
                             resultss(answer)
-                            time.sleep(0.3)
                         else:
-                            print("\nStatus code: " + v + " ip: " + ip)
+                            print("\nIp missed: " + ip + " due to status code: " + v)
         except Exception as e:
+            print("\n" + ip)
             print(e)
-
 def resultss(r_answer):
 
     lstresolv = []
@@ -192,5 +191,5 @@ if __name__  == "__main__":
     ip_ist = arugments.iplist #accepted arguments
     open_iplist(ip_ist) # read list and save ip's
     file_name = fileName() #Generate File name
+
     create_excel(file_name)
-    
