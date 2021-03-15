@@ -29,15 +29,12 @@ def open_iplist(file_name):
         print(e)
         sys.exit(1)
 def Handle_request(file_to_handle):
-    pos = 0
-    idlst = []
-    iplst = []
     resp_code = {}
     answer = []
+    FO = open("answer_loop.txt", 'w+')
     lines = file_to_handle.readlines()
     for ip in tqdm(lines):
-        pos += 1
-        time.sleep(10)
+        #time.sleep(10)
         result = requests.get("https://www.threatcrowd.org/searchApi/v2/ip/report/?", params = {"ip": ip.strip()})
         try:
             if result.json() != {}:
@@ -45,19 +42,23 @@ def Handle_request(file_to_handle):
                 for k, v in resp_code.items():
                     if k == "response_code":
                         if v == str(1):
-                            idlst.append(pos)
-                            csv["id"] = idlst
-                            iplst.append(ip.strip())
-                            csv["ip"] = iplst
                             answer.append(json.loads(result.content))
-                            resultss(answer)
+                            FO.write("%s\n" %(csv))
+                            try:
+                                resultss(answer,ip)
+                            except Exception as e:
+                                print(ip)
+                                print(e)
                         else:
                             print("\nIp missed: " + ip + " due to status code: " + v)
         except Exception as e:
             print("\n" + ip)
             print(e)
-def resultss(r_answer):
-
+def resultss(r_answer,ip):
+    
+    pos = 0
+    idlst = []
+    iplst = []
     lstresolv = []
     lstresolv2 = []
     lstresolv3 = []
@@ -71,6 +72,11 @@ def resultss(r_answer):
 
     if isinstance(r_answer, list):
         for x in r_answer:
+            pos += 1
+            idlst.append(pos)
+            csv["id"] = idlst
+            iplst.append(ip.strip())
+            csv["ip"] = iplst
             for k,v in x.items():
                 if k == "resolutions":
                     temp_list = []
@@ -90,8 +96,8 @@ def resultss(r_answer):
                         lstresolv3.append(temp_list[4])
                         csv["Last_resolved3"] = lstresolv3
                         dom3.append(temp_list[5])
-                        csv["domain3"] = dom3   
-                    else:
+                        csv["domain3"] = dom3
+                    else:   
                         if len(v) == 2:
                             lstresolv.append(temp_list[0])
                             csv["Last_resolved"] = lstresolv
@@ -104,75 +110,75 @@ def resultss(r_answer):
                             lstresolv3.append("none")
                             csv["Last_resolved3"] = lstresolv3
                             dom3.append("none")
-                            csv["domain3"] = dom3    
-                        elif len(v) == 1: 
-                            lstresolv.append(temp_list[0])
-                            csv["Last_resolved"] = lstresolv
-                            dom.append(temp_list[1])
-                            csv["domain"] = dom
-                            lstresolv2.append("none")
-                            csv["Last_resolved2"] = lstresolv2
-                            dom2.append("none")
-                            csv["domain2"] = dom2
-                            lstresolv3.append("none")
-                            csv["Last_resolved3"] = lstresolv3
-                            dom3.append("none")
-                            csv["domain3"] = dom3   
-                        else:
-                            lstresolv.append("none")
-                            csv["Last_resolved"] = lstresolv
-                            dom.append("none")
-                            csv["domain"] = dom
-                            lstresolv2.append("none")
-                            csv["Last_resolved2"] = lstresolv2
-                            dom2.append("none")
-                            csv["domain2"] = dom2
-                            lstresolv3.append("none")
-                            csv["Last_resolved3"] = lstresolv3
-                            dom3.append("none")
-                            csv["domain3"] = dom3   
+                            csv["domain3"] = dom3
+                        else:    
+                            if len(v) == 1: 
+                                lstresolv.append(temp_list[0])
+                                csv["Last_resolved"] = lstresolv
+                                dom.append(temp_list[1])
+                                csv["domain"] = dom
+                                lstresolv2.append("none")
+                                csv["Last_resolved2"] = lstresolv2
+                                dom2.append("none")
+                                csv["domain2"] = dom2
+                                lstresolv3.append("none")
+                                csv["Last_resolved3"] = lstresolv3
+                                dom3.append("none")
+                                csv["domain3"] = dom3   
+                            else:
+                                lstresolv.append("none")
+                                csv["Last_resolved"] = lstresolv
+                                dom.append("none")
+                                csv["domain"] = dom
+                                lstresolv2.append("none")
+                                csv["Last_resolved2"] = lstresolv2
+                                dom2.append("none")
+                                csv["domain2"] = dom2
+                                lstresolv3.append("none")
+                                csv["Last_resolved3"] = lstresolv3
+                                dom3.append("none")
+                                csv["domain3"] = dom3   
                 if k == "hashes":
                     temp_list = []
-                    for l in v:
-                        temp = l.values()
-                        for o in temp:
-                            temp_list.append(o)
-                    if len(v) >= 3:
-                        avhashes.append(temp_list[0])
-                        csv["Hashe"] = avhashes
-                        avhashes2.append(temp_list[1])
-                        csv["Hashe2"] = avhashes2
-                        avhashes3.append(temp_list[2])
-                        csv["Hashe3"] = avhashes3
-                    else:
-                        if len(v) == 2:
+                    if len(v) != 0: 
+                        for l in v:
+                            temp_list.append(l)
+                        if len(v) >= 3:
                             avhashes.append(temp_list[0])
                             csv["Hashe"] = avhashes
                             avhashes2.append(temp_list[1])
                             csv["Hashe2"] = avhashes2
-                            avhashes3.append("none")
-                            csv["Hashe3"] = avhashes3
-                        elif len(v) == 1: 
-                            avhashes.append(temp_list[0])
-                            csv["Hashe"] = avhashes
-                            avhashes2.append("none")
-                            csv["Hashe2"] = avhashes2
-                            avhashes3.append("none")
+                            avhashes3.append(temp_list[2])
                             csv["Hashe3"] = avhashes3
                         else:
-                            avhashes.append("none")
-                            csv["Hashe"] = avhashes
-                            avhashes2.append("none")
-                            csv["Hashe2"] = avhashes2
-                            avhashes3.append("none")
-                            csv["Hashe3"] = avhashes3
+                            if len(v) == 2:
+                                avhashes.append(temp_list[0])
+                                csv["Hashe"] = avhashes
+                                avhashes2.append(temp_list[1])
+                                csv["Hashe2"] = avhashes2
+                                avhashes3.append("none")
+                                csv["Hashe3"] = avhashes3
+                            else:
+                                avhashes.append(temp_list[0])
+                                csv["Hashe"] = avhashes
+                                avhashes2.append("none")
+                                csv["Hashe2"] = avhashes2
+                                avhashes3.append("none")
+                                csv["Hashe3"] = avhashes3
+                    else:
+                        avhashes.append("none")
+                        csv["Hashe"] = avhashes
+                        avhashes2.append("none")
+                        csv["Hashe2"] = avhashes2
+                        avhashes3.append("none")
+                        csv["Hashe3"] = avhashes3
                 if k == "permalink":
                     permalink.append(v)
-                    csv["permalink"] = permalink
+                    csv["permalink"] = permalink 
 def create_excel(fileNa):
     with pd.ExcelWriter(fileNa, engine='xlsxwriter') as writer: # pylint: disable=abstract-class-instantiated
         df = pd.DataFrame(csv)
-        df.to_excel(writer, sheet_name='Final results', index=False)               
+        df.to_excel(writer, sheet_name='Final results', index=False)             
     print("\nFile " + fileNa + " created")
 def valid_ext(ext):
     regex = re.search(r'\.txt', ext)
@@ -187,9 +193,13 @@ def args():
 if __name__  == "__main__":
 
     csv = {}
+
     arugments = args()
     ip_ist = arugments.iplist #accepted arguments
     open_iplist(ip_ist) # read list and save ip's
     file_name = fileName() #Generate File name
+
+    for k,v in csv.items():
+        print(k, len(v))
 
     create_excel(file_name)
