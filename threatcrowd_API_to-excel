@@ -24,18 +24,44 @@ def fileName():
 def open_iplist(file_name):
     try:
         with open(file_name, 'r', encoding="UTF-8") as handle:
-            Handle_request(handle)
+            hit_cache(handle)
     except Exception as e:
         print(e)
         sys.exit(1)
-def Handle_request(file_to_handle):
+def Diff(li1, li2):
+    return (list(list(set(li1)-set(li2)) + list(set(li2)-set(li1))))
+def hit_cache(file_to_handle):
+    caches = cache().readlines()
+    currentiplst = []
+    existiplst = []
+    existlst = []
+    lines = file_to_handle.readlines()
+    if len(caches) == 0:
+        Handle_request(lines)
+    else:        
+        for ip in lines:
+            currentiplst.append(ip.strip())
+            my_regex = r"{0}".format(ip.strip())
+            try:
+                for zx in caches:
+                    temp_search = re.search(my_regex, zx)
+                    if temp_search:
+                        existiplst.append(ip.strip())
+                        existlst.append(json.loads(temp_search.string.replace("\'","\"").strip()))
+                        resultss(existlst,ip.strip())
+            except Exception as e:
+                print("problem:",e)
+        diff_list = Diff(currentiplst,existiplst)
+        Handle_request(diff_list)    
+def Handle_request(ips):
+    cfile_name = path() + "\\cache.txt"
     resp_code = {}
     answer = []
-    FO = open("answer_loop.txt", 'w+')
-    lines = file_to_handle.readlines()
-    for ip in tqdm(lines):
-        #time.sleep(10)
-        result = requests.get("https://www.threatcrowd.org/searchApi/v2/ip/report/?", params = {"ip": ip.strip()})
+    FO = open("log_loop.txt", 'w+')
+    co = open(cfile_name,"a")
+    #time.sleep(10)
+    for iq in tqdm(ips):
+        result = requests.get("https://www.threatcrowd.org/searchApi/v2/ip/report/?", params = {"ip": iq})
         try:
             if result.json() != {}:
                 resp_code = json.loads(result.content)
@@ -43,22 +69,24 @@ def Handle_request(file_to_handle):
                     if k == "response_code":
                         if v == str(1):
                             answer.append(json.loads(result.content))
-                            FO.write("%s\n" %(csv))
+                            co.write("%s\n" %(json.loads(result.content)))
+                            FO.write("%s\n" %(csv)) #log current operation
                             try:
-                                resultss(answer,ip)
+                                resultss(answer,iq.strip())
                             except Exception as e:
-                                print(ip)
+                                print(iq)
                                 print(e)
                         else:
-                            print("\nIp missed: " + ip + " due to status code: " + v)
+                            print("\nIp missed: " + iq + " status code: " + v)
         except Exception as e:
-            print("\n" + ip)
+            print("\n" + iq)
             print(e)
-def resultss(r_answer,ip):
-    
+    FO.close()
+    co.close()
+def resultss(r_answer,ips):
+
     pos = 0
     idlst = []
-    iplst = []
     lstresolv = []
     lstresolv2 = []
     lstresolv3 = []
@@ -71,12 +99,12 @@ def resultss(r_answer,ip):
     permalink =[]
 
     if isinstance(r_answer, list):
+        IPlst.append(ips)
         for x in r_answer:
             pos += 1
             idlst.append(pos)
             csv["id"] = idlst
-            iplst.append(ip.strip())
-            csv["ip"] = iplst
+            csv["ip"] = IPlst
             for k,v in x.items():
                 if k == "resolutions":
                     temp_list = []
@@ -189,17 +217,36 @@ def args():
     args = ArgumentParser()
     args.add_argument('iplist', help='Name the IP_list file plus the extension', type=valid_ext)
     return args.parse_args()
+def cache():
+    cachepath = path() + "\\cache.txt"
+    if os.path.isfile(cachepath):
+        try:
+            ca = open(cachepath, 'r')
+            return ca
+        except Exception as e:
+            print(e)
+    else:
+        ca = open(cachepath, 'w+')
+        print("No cache found.")
+        return ca
 
 if __name__  == "__main__":
 
     csv = {}
+    IPlst = []
 
     arugments = args()
     ip_ist = arugments.iplist #accepted arguments
     open_iplist(ip_ist) # read list and save ip's
     file_name = fileName() #Generate File name
 
-    for k,v in csv.items():
-        print(k, len(v))
+    for k,v in csv.items(): 
+        print(k, len(v))       #view if every list has the same len
 
     create_excel(file_name)
+#add keyboard break:
+#try:
+#    while True:
+#        do_something()
+#except KeyboardInterrupt:
+#    pass
