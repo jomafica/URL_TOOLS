@@ -246,10 +246,9 @@ if __name__  == "__main__":
     open_iplist(ip_ist) # read list and save ip's
     file_name = fileName() #Generate File name
 
-    for k,v in csv.items(): 
-        print(k, len(v))       #view if every list has the same len
+    #for k,v in csv.items(): 
+    #    print(k, len(v))       #view if every list has the same len
 
-    print(csv)
     create_excel(file_name)
 #add keyboard break:
 #try:
