@@ -49,14 +49,10 @@ def hit_cache(file_to_handle):
             except Exception as e:
                 print("problem:",e)
     diff_list = Diff(currentiplst,existiplst)
-    print("Exist in list:", len(existlst))
-    print("Exist in current list:", len(currentiplst))
-    print("After diff:", len(diff_list))
     if diff_list:
         Handle_request(diff_list)
         for iips in existiplst:
             resultss(existlst,iips.strip()) 
-        #print("used handle request")
     else:
         for iips in existiplst:
             resultss(existlst,iips.strip())    
@@ -119,59 +115,59 @@ def resultss(r_answer,ips):
                         for o in temp:
                             temp_list.append(o)
                     if len(v) >= 3:
-                        lstresolv.append(temp_list[0])
-                        csv["Last_resolved"] = lstresolv
-                        dom.append(temp_list[1])
+                        dom.append(temp_list[-1])
                         csv["domain"] = dom
-                        lstresolv2.append(temp_list[2])
-                        csv["Last_resolved2"] = lstresolv2
-                        dom2.append(temp_list[3])
+                        lstresolv.append(temp_list[-2])
+                        csv["Last_resolved"] = lstresolv
+                        dom2.append(temp_list[-3])
                         csv["domain2"] = dom2
-                        lstresolv3.append(temp_list[4])
-                        csv["Last_resolved3"] = lstresolv3
-                        dom3.append(temp_list[5])
+                        lstresolv2.append(temp_list[-4])
+                        csv["Last_resolved2"] = lstresolv2
+                        dom3.append(temp_list[-5])
                         csv["domain3"] = dom3
+                        lstresolv3.append(temp_list[-6])
+                        csv["Last_resolved3"] = lstresolv3
                     else:   
                         if len(v) == 2:
-                            lstresolv.append(temp_list[0])
-                            csv["Last_resolved"] = lstresolv
-                            dom.append(temp_list[1])
+                            dom.append(temp_list[-1])
                             csv["domain"] = dom
-                            lstresolv2.append(temp_list[2])
-                            csv["Last_resolved2"] = lstresolv2
-                            dom2.append(temp_list[3])
+                            lstresolv.append(temp_list[-2])
+                            csv["Last_resolved"] = lstresolv
+                            dom2.append(temp_list[-3])
                             csv["domain2"] = dom2
-                            lstresolv3.append("none")
-                            csv["Last_resolved3"] = lstresolv3
+                            lstresolv2.append(temp_list[-4])
+                            csv["Last_resolved2"] = lstresolv2
                             dom3.append("none")
                             csv["domain3"] = dom3
+                            lstresolv3.append("none")
+                            csv["Last_resolved3"] = lstresolv3
                         else:    
-                            if len(v) == 1: 
-                                lstresolv.append(temp_list[0])
+                            if len(v) == 1:
+                                dom.append(temp_list[-1])
+                                csv["domain"] = dom                                 
+                                lstresolv.append(temp_list[-2])
                                 csv["Last_resolved"] = lstresolv
-                                dom.append(temp_list[1])
-                                csv["domain"] = dom
-                                lstresolv2.append("none")
-                                csv["Last_resolved2"] = lstresolv2
                                 dom2.append("none")
                                 csv["domain2"] = dom2
-                                lstresolv3.append("none")
-                                csv["Last_resolved3"] = lstresolv3
+                                lstresolv2.append("none")
+                                csv["Last_resolved2"] = lstresolv2
                                 dom3.append("none")
                                 csv["domain3"] = dom3   
+                                lstresolv3.append("none")
+                                csv["Last_resolved3"] = lstresolv3
                             else:
+                                dom.append("none")
+                                csv["domain"] = dom                                
                                 lstresolv.append("none")
                                 csv["Last_resolved"] = lstresolv
-                                dom.append("none")
-                                csv["domain"] = dom
-                                lstresolv2.append("none")
-                                csv["Last_resolved2"] = lstresolv2
                                 dom2.append("none")
                                 csv["domain2"] = dom2
-                                lstresolv3.append("none")
-                                csv["Last_resolved3"] = lstresolv3
+                                lstresolv2.append("none")
+                                csv["Last_resolved2"] = lstresolv2
                                 dom3.append("none")
                                 csv["domain3"] = dom3   
+                                lstresolv3.append("none")
+                                csv["Last_resolved3"] = lstresolv3
                 if k == "hashes":
                     temp_list = []
                     if len(v) != 0: 
@@ -208,7 +204,7 @@ def resultss(r_answer,ips):
                         csv["Hashe3"] = avhashes3
                 if k == "permalink":
                     permalink.append(v)
-                    csv["permalink"] = permalink
+                    csv["permalink"] = permalink 
 def create_excel(fileNa):
     with pd.ExcelWriter(fileNa, engine='xlsxwriter') as writer: # pylint: disable=abstract-class-instantiated
         df = pd.DataFrame(csv)
