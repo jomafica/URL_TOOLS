@@ -7,7 +7,6 @@ def path():
     direct = "\\Result"
     currentdir = os.getcwd()
     path = currentdir + direct
-
     try:
        os.mkdir(path)
     except FileExistsError:
@@ -34,7 +33,6 @@ def hit_cache(file_to_handle):
     caches = cache().readlines()
     currentiplst = []
     existiplst = []
-    existlst = []
     lines = file_to_handle.readlines()
     if len(caches) == 0:
         Handle_request(lines)
@@ -48,15 +46,23 @@ def hit_cache(file_to_handle):
                     if temp_search:
                         existiplst.append(ip.strip())
                         existlst.append(json.loads(temp_search.string.replace("\'","\"").strip()))
-                        resultss(existlst,ip.strip())
             except Exception as e:
                 print("problem:",e)
-        diff_list = Diff(currentiplst,existiplst)
-        Handle_request(diff_list)    
+    diff_list = Diff(currentiplst,existiplst)
+    print("Exist in list:", len(existlst))
+    print("Exist in current list:", len(currentiplst))
+    print("After diff:", len(diff_list))
+    if diff_list:
+        Handle_request(diff_list)
+        for iips in existiplst:
+            resultss(existlst,iips.strip()) 
+        #print("used handle request")
+    else:
+        for iips in existiplst:
+            resultss(existlst,iips.strip())    
 def Handle_request(ips):
     cfile_name = path() + "\\cache.txt"
     resp_code = {}
-    answer = []
     FO = open("log_loop.txt", 'w+')
     co = open(cfile_name,"a")
     #time.sleep(10)
@@ -68,11 +74,11 @@ def Handle_request(ips):
                 for k, v in resp_code.items():
                     if k == "response_code":
                         if v == str(1):
-                            answer.append(json.loads(result.content))
+                            existlst.append(json.loads(result.content))
                             co.write("%s\n" %(json.loads(result.content)))
                             FO.write("%s\n" %(csv)) #log current operation
                             try:
-                                resultss(answer,iq.strip())
+                                resultss(existlst,iq.strip())
                             except Exception as e:
                                 print(iq)
                                 print(e)
@@ -202,7 +208,7 @@ def resultss(r_answer,ips):
                         csv["Hashe3"] = avhashes3
                 if k == "permalink":
                     permalink.append(v)
-                    csv["permalink"] = permalink 
+                    csv["permalink"] = permalink
 def create_excel(fileNa):
     with pd.ExcelWriter(fileNa, engine='xlsxwriter') as writer: # pylint: disable=abstract-class-instantiated
         df = pd.DataFrame(csv)
@@ -227,14 +233,14 @@ def cache():
             print(e)
     else:
         ca = open(cachepath, 'w+')
-        print("No cache found.")
+        print("No cache found. Creating one.")
         return ca
 
 if __name__  == "__main__":
 
     csv = {}
     IPlst = []
-
+    existlst = []
     arugments = args()
     ip_ist = arugments.iplist #accepted arguments
     open_iplist(ip_ist) # read list and save ip's
@@ -243,6 +249,7 @@ if __name__  == "__main__":
     for k,v in csv.items(): 
         print(k, len(v))       #view if every list has the same len
 
+    print(csv)
     create_excel(file_name)
 #add keyboard break:
 #try:
@@ -250,3 +257,5 @@ if __name__  == "__main__":
 #        do_something()
 #except KeyboardInterrupt:
 #    pass
+#multithread?? 
+#first try fails 
