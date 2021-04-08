@@ -1,0 +1,98 @@
+import requests
+import json
+import re
+from argparse import ArgumentParser, ArgumentTypeError
+import concurrent.futures
+
+cookies = None
+
+class OutFile:
+
+    txt = open("results_in_CSV.txt", "w+")        
+
+    def writefile(self, cnts):
+        self.txt.write(cnts)
+
+    def closefile(self):
+        self.txt.closed
+
+def workers_head(func_to_call, arg):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        {executor.submit(func_to_call, ip):ip for ip in arg}
+
+def cookie(fw,us,pss):
+    re = requests.post("https://" + fw + "/logincheck?"+ "username=" + us + "&" + "secretkey=" + pss, verify = False)
+    contents = content(fw, re.cookies)
+    return contents
+
+def content(fw, cks):
+    ntp_uri = "/api/v2/cmdb/system/ntp"
+    re = requests.get("https://" + fw + ntp_uri, cookies=cks, verify = False)
+    return re.json()  # Comes in binary
+
+def results(cont):
+    json = []
+    if isinstance (cont, dict):
+        for k,v in cont.items():
+            if k == "serial":
+                json.append(v)
+            if k == "results":
+                for key,value in v.items():
+                    if key == "type":
+                        json.append(value)
+                    if key == "ntpserver":
+                        if value:
+                            for i in value:
+                                if isinstance(i,dict):
+                                    for kk,vv in i.items():
+                                        if kk == "server":
+                                            json.append(vv) 
+                        else:
+                            json.append("none") 
+    return json
+
+def writef(conts,ofile):
+    vals = results(conts)
+    for val in vals:
+        ofile.writefile(val + ",")
+    ofile.writefile("\n")
+
+def valid_ext(ext):
+    regex = re.search(r'\.txt', ext)
+    if not regex:
+        raise ArgumentTypeError('Must add the extension txt')
+    return ext
+
+def args():
+    args = ArgumentParser()
+    args.add_argument('Firewall_list', help='Name the IP firewall list file plus the extension in txt', type=valid_ext)
+    return args.parse_args()
+
+
+def main(fwip):
+
+    user = "admin"
+    passwd = "admin"
+
+    of = OutFile()
+    of.writefile("NTP_TYPE,NTP_SERVER,SN\n")
+
+    for ip in fwip:
+        try:
+            reslt = cookie(ip.strip(), user, passwd)
+            if reslt:
+                writef(reslt,of)
+        except Exception as e:
+            of.writefile("None,None,None," + ip)
+            print(e)
+            
+    of.closefile()
+
+if __name__ == '__main__':
+
+    arguments = args()
+    firewall_ips = open(arguments.Firewall_list, "r")
+
+    main(firewall_ips)
+
+
