@@ -3,7 +3,6 @@ import json
 import re
 from argparse import ArgumentParser, ArgumentTypeError
 import concurrent.futures
-import requests
 
 requests.packages.urllib3.disable_warnings() 
 
@@ -13,8 +12,8 @@ How to use:
     - in the "def cookie(fw):":
         - Give username
         - Give password
+    The output will be a file with csv data(results_in_CSV.txt).
 """
-
 
 class OutFile:
 
@@ -28,25 +27,30 @@ class OutFile:
 
 def workers_head(func_to_call, arg, of):
 
-    of.writefile("NTP_TYPE,NTP_SERVER,SN\n")
+    of.writefile("NTP_TYPE,NTP_SERVER,SN,TIMEZONE,HOSTNAME,SN,IP\n")
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
 
         future = {executor.submit(func_to_call, ip.strip(), of):ip for ip in arg}
 
-        for futuresult in concurrent.futures.as_completed(future):
+        for futuresult in concurrent.futures.as_completed(future): 
+
             try:
-                if futuresult:
+
+                if isinstance(futuresult.result(),list):
+
                     writef(futuresult.result(),of)
 
             except Exception as e:
+
                 print(e)
+                
     of.closefile()
         
 def cookie(fw, of):
 
-    us = "admin"             # change credencials 
-    pss = "admin"            # change credencials 
+    us = "dpereira"             # change credencials 
+    pss = "qazwsx123"            # change credencials 
 
     try:
 
@@ -58,47 +62,68 @@ def cookie(fw, of):
 
     except requests.exceptions.Timeout:
 
-        of.writefile("None,None,None," + fw)
+        of.writefile("None,None,None,None,None,None," + fw + "\n")
 
     except Exception as e:
 
-        of.writefile("None,None,None," + fw)
+        of.writefile("None,None,None,None,None,None," + fw + "\n")
         print(e)
 
 def content(fw, cks):
+
+    ans_list = []
+    
     ntp_uri = "/api/v2/cmdb/system/ntp"
-    re = requests.get("https://" + fw + ntp_uri, cookies=cks, verify = False)
+    timezone_uri = "/api/v2/cmdb/system/global"
+
+    re_ntp = requests.get("https://" + fw + ntp_uri, cookies=cks, verify = False)
+    ans_list.append(re_ntp.json())
+
+    re_tz = requests.get("https://" + fw + timezone_uri, cookies=cks, verify = False)
+    ans_list.append(re_tz.json())
+
     logout(fw)
-    return re.json()  
+
+    return ans_list
 
 def logout(fw):
     re = requests.post("https://" + fw + "/logout", verify = False)
 
 def results(cont):
-    json = []
-    if isinstance (cont, dict):
-        for k,v in cont.items():
-            if k == "serial":
-                json.append(v)
-            if k == "results":
-                for key,value in v.items():
-                    if key == "type":
-                        json.append(value)
-                    if key == "ntpserver":
-                        if value:
-                            for i in value:
-                                if isinstance(i,dict):
-                                    for kk,vv in i.items():
-                                        if kk == "server":
-                                            json.append(vv) 
-                        else:
-                            json.append("none") 
-    return json
+
+    csv_list = []
+    for dct in cont:
+        if isinstance (dct, dict):
+            for k,v in dct.items():
+                if k == "serial":
+                    csv_list.append(v)
+                if k == "results":
+                    for key,value in v.items():
+                        if key == "hostname":
+                            csv_list.append(value)
+                        if key == "type":
+                            csv_list.append(value)
+                        if key == "ntpserver":
+                            if value:
+                                for i in value:
+                                    if isinstance(i,dict):
+                                        for kk,vv in i.items():
+                                            if kk == "server":
+                                                csv_list.append(vv) 
+                            else:
+                                csv_list.append("none")
+                        if key == "timezone":
+                            csv_list.append(value)
+    return csv_list
 
 def writef(conts,ofile):
+
     vals = results(conts)
+
     for val in vals:
+
         ofile.writefile(val + ",")
+
     ofile.writefile("\n")
 
 def valid_ext(ext):
@@ -118,12 +143,9 @@ def main(fwip):
 
     workers_head(cookie, fwip, of)
 
-
 if __name__ == '__main__':
 
     arguments = args()
     firewall_ips = open(arguments.Firewall_list, "r")
 
     main(firewall_ips)
-
-
