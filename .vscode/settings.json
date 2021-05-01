@@ -1,0 +1,10 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.linting.mypyEnabled": false,
+    "python.linting.enabled": true,
+    "python.pythonPath": ".venv\\Scripts\\python.exe",
+    "workbench.editorAssociations": [
+    
+    ],
+    "liveServer.settings.multiRootWorkspaceName": "Scripts"
+}
