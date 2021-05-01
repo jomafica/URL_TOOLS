@@ -1,0 +1,113 @@
+import json
+import re
+from argparse import ArgumentParser, ArgumentTypeError
+
+class OutFile:
+
+    txt = open("results_in_CSV_json.txt", "w+")        
+
+    def writefile(self, cnts):
+        self.txt.write(cnts)
+
+    def closefile(self):
+        self.txt.closed
+
+def parse(cont):
+    new_json = {}
+    for k,v in cont.items():
+        if isinstance(v, dict):
+            for ks, vs in v.items():
+                if ks == "name":
+                    temp_rx = re.findall(r'(?<=assets\/)(.*\w)$', vs)
+                    if temp_rx:
+                        new_json['name'] = ''.join(temp_rx)
+                if ks == "securityCenterProperties":
+                    if isinstance(vs, dict):
+                        dict_ks = [k for k,v in vs.items()]
+                        if "resourceOwners" not in dict_ks:
+                            new_json['resourceOwners'] = ["none"]
+                        for kk,vv in vs.items():
+                            if kk == "resourceOwners":
+                                temp_lst = []
+                                for i in vv:
+                                    temp_rex = re.findall(r'(?<=group\:)(.*\w)$', i)
+                                    if temp_rex:
+                                        temp_lst.append(''.join(temp_rex))
+                                    temp_rex = re.findall(r'(?<=serviceAccount\:)(.*\w)$', i)
+                                    if temp_rex:
+                                        temp_lst.append(''.join(temp_rex))
+                                    temp_rex = re.findall(r'(?<=user\:)(.*\w)$', i)
+                                    if temp_rex:
+                                        temp_lst.append(''.join(temp_rex))
+                                new_json['resourceOwners'] = temp_lst
+                            if kk == "resourceParentDisplayName":
+                                new_json['resourceParentDisplayName'] = vv
+                if ks == "resourceProperties":
+                    if isinstance(vs, dict):
+                        for kk,vv in vs.items():
+                            if kk == "networkInterfaces":
+                                for ii in vv.split():
+                                    temp_re = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', ii)
+                                    if temp_re:
+                                        new_json['networkInterfaces'] = ' '.join([str(elem) for elem in temp_re])
+                            if kk == "disks":
+                                temp_res = json.loads(vv)
+                                for xx in temp_res:
+                                    for kkk,vvv in xx.items():
+                                        if kkk == "licenses":
+                                            temp_ress = re.findall(r'(?<=licenses\/)(.*\w)$', vvv[0])
+                                            if temp_ress:
+                                                new_json['licenses'] = ''.join(temp_ress)
+    return new_json 
+
+def writef(conts,ofile):
+    for ls in json.load(conts):
+        if isinstance (ls, dict):
+            vals = parse(ls)
+            for valos, keys in vals.items():
+                if isinstance(keys,str):
+                    ofile.writefile(keys + ";")
+                if valos == "resourceOwners":
+                    if isinstance(keys,list):
+                        if len(keys) < 1:
+                            ofile.writefile(';')
+                        if len(keys) == 1:
+                            ofile.writefile(''.join(keys) + ";")
+                        if len(keys) > 1:
+                            nmb = 0
+                            for pos in range(0, len(keys)):
+                                ofile.writefile(keys[pos] + ",")
+                                nmb += 1
+                                if nmb == len(keys):
+                                    ofile.writefile(";")
+            ofile.writefile("\n") 
+
+def valid_ext(ext):
+    regex = re.search(r'\.json', ext)
+    if not regex:
+        raise ArgumentTypeError('Must add the extension .json')
+    return ext
+
+def args():
+    args = ArgumentParser()
+    args.add_argument('json_file', help='Add json file in json extention', type=valid_ext)
+    return args.parse_args()
+
+def main(lst):
+      
+    of = OutFile()
+
+    of.writefile("name;resourceOwners;resourceParentDisplayName;networkInterfaces;disks\n")
+
+    writef(lst,of)
+
+    of.closefile()
+
+if __name__ == '__main__':
+
+    arguments = args()
+    json_db = open(arguments.json_file, "r")
+
+    main(json_db)
+
+
