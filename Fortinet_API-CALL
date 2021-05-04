@@ -50,7 +50,7 @@ def workers_head(func_to_call, arg, of):
 def cookie(fw, of):
 
     us = "dpereira"             # change credencials 
-    pss = "qazwsx123"            # change credencials 
+    pss = "Jomafica01!"            # change credencials 
 
     try:
 
@@ -67,7 +67,7 @@ def cookie(fw, of):
     except Exception as e:
 
         of.writefile("None,None,None,None,None,None," + fw + "\n")
-        print(e)
+        print("cookies: ", e)
 
 def content(fw, cks):
 
@@ -77,14 +77,21 @@ def content(fw, cks):
     timezone_uri = "/api/v2/cmdb/system/global"
 
     re_ntp = requests.get("https://" + fw + ntp_uri, cookies=cks, verify = False)
-    ans_list.append(re_ntp.json())
+    
+    if re_ntp.status_code == 200:
+        ans_list.append(re_ntp.json())
 
     re_tz = requests.get("https://" + fw + timezone_uri, cookies=cks, verify = False)
-    ans_list.append(re_tz.json())
+    
+    if re_tz.status_code == 200:
+        ans_list.append(re_tz.json())
+
+    ans_list = ("None,None,None,None,None,None," + fw + "\n")
 
     logout(fw)
 
     return ans_list
+
 
 def logout(fw):
     re = requests.post("https://" + fw + "/logout", verify = False)
