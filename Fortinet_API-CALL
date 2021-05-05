@@ -27,7 +27,7 @@ class OutFile:
 
 def workers_head(func_to_call, arg, of):
 
-    of.writefile("NTP_TYPE,NTP_SERVER,SN,TIMEZONE,HOSTNAME,SN,IP\n")
+    of.writefile("NTP_TYPE,NTP_SERVER,NTP_SERVER1,IP_MGMT,SN,TIMEZONE,HOSTNAME,SN\n")
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
 
@@ -46,28 +46,29 @@ def workers_head(func_to_call, arg, of):
                 print(e)
                 
     of.closefile()
-        
+              
 def cookie(fw, of):
 
-    us = "user"             # change credencials 
-    pss = "pass"            # change credencials 
+    us = "tsete"             # change credencials 
+    pss = "teste"            # change credencials 
 
     try:
 
-        re = requests.post("https://" + fw + "/logincheck?"+ "username=" + us + "&" + "secretkey=" + pss, verify = False, timeout=1)
+        re = requests.post("https://" + fw + "/logincheck?"+ "username=" + us + "&" + "secretkey=" + pss, verify = False, timeout=20)
         
         if re.status_code == 200:
 
             return content(fw, re.cookies)
 
     except requests.exceptions.Timeout:
-
-        of.writefile("None,None,None,None,None,None," + fw + "\n")
+        
+        of.writefile("None,None,None," + fw + ",None,None,None,None\n")
+        print("Timeout", fw)
 
     except Exception as e:
 
-        of.writefile("None,None,None,None,None,None," + fw + "\n")
-        print("cookies: ", e)
+        of.writefile("None,None,None," + fw + ",None,None,None,None\n")
+        print("cookies: ", e, fw)
 
 def content(fw, cks):
 
@@ -77,21 +78,27 @@ def content(fw, cks):
     timezone_uri = "/api/v2/cmdb/system/global"
 
     re_ntp = requests.get("https://" + fw + ntp_uri, cookies=cks, verify = False)
-    
-    if re_ntp.status_code == 200:
-        ans_list.append(re_ntp.json())
+
+    if re_ntp.status_code != 200:
+
+        ans_list = ("None,None,None," + fw + ",None,None,None,None\n")
+
+    elif re_ntp.status_code == 200:
+        _addip = re_ntp.json()
+        _addip["ip"] = fw
+        ans_list.append(_addip)
 
     re_tz = requests.get("https://" + fw + timezone_uri, cookies=cks, verify = False)
-    
-    if re_tz.status_code == 200:
-        ans_list.append(re_tz.json())
 
-    ans_list = ("None,None,None,None,None,None," + fw + "\n")
+    if re_tz.status_code != 200:
+        ans_list = ("None,None,None," + fw + ",None,None,None,None\n")
+
+    elif re_tz.status_code == 200:
+        ans_list.append(re_tz.json())
 
     logout(fw)
 
     return ans_list
-
 
 def logout(fw):
     re = requests.post("https://" + fw + "/logout", verify = False)
@@ -118,9 +125,11 @@ def results(cont):
                                             if kk == "server":
                                                 csv_list.append(vv) 
                             else:
-                                csv_list.append("none")
+                                csv_list.append("None,None")
                         if key == "timezone":
                             csv_list.append(value)
+                if k == "ip":
+                    csv_list.append(v)
     return csv_list
 
 def writef(conts,ofile):
