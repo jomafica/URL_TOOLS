@@ -27,7 +27,7 @@ class OutFile:
 
 def workers_head(func_to_call, arg, of):
 
-    of.writefile("NTP_TYPE,NTP_SERVER,NTP_SERVER1,IP_MGMT,SN,TIMEZONE,HOSTNAME,SN\n")
+    of.writefile("NTP_TYPE,NTP_SERVER,NTP_SERVER1,NTP_SERVER2,SN,IP_MGMT,TIMEZONE,HOSTNAME,SN\n")
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
 
@@ -49,8 +49,8 @@ def workers_head(func_to_call, arg, of):
               
 def cookie(fw, of):
 
-    us = "tsete"             # change credencials 
-    pss = "teste"            # change credencials 
+    us = "dpereira"             # change credencials 
+    pss = "Jomafica01!"            # change credencials 
 
     try:
 
@@ -62,12 +62,12 @@ def cookie(fw, of):
 
     except requests.exceptions.Timeout:
         
-        of.writefile("None,None,None," + fw + ",None,None,None,None\n")
+        of.writefile("None,None,None,None,None," + fw + ",None,None,None\n")
         print("Timeout", fw)
 
     except Exception as e:
 
-        of.writefile("None,None,None," + fw + ",None,None,None,None\n")
+        of.writefile("None,None,None,None,None," + fw + ",None,None,None\n")
         print("cookies: ", e, fw)
 
 def content(fw, cks):
@@ -81,7 +81,7 @@ def content(fw, cks):
 
     if re_ntp.status_code != 200:
 
-        ans_list = ("None,None,None," + fw + ",None,None,None,None\n")
+        ans_list = ("None,None,None,None,None" + fw + ",None,None,None\n")
 
     elif re_ntp.status_code == 200:
         _addip = re_ntp.json()
@@ -91,7 +91,7 @@ def content(fw, cks):
     re_tz = requests.get("https://" + fw + timezone_uri, cookies=cks, verify = False)
 
     if re_tz.status_code != 200:
-        ans_list = ("None,None,None," + fw + ",None,None,None,None\n")
+        ans_list = ("None,None,None,None,None" + fw + ",None,None,None\n")
 
     elif re_tz.status_code == 200:
         ans_list.append(re_tz.json())
@@ -119,13 +119,30 @@ def results(cont):
                             csv_list.append(value)
                         if key == "ntpserver":
                             if value:
-                                for i in value:
-                                    if isinstance(i,dict):
-                                        for kk,vv in i.items():
+                                temp_list = value
+                                if len(temp_list) == 3:
+                                    _temp_srv_list = []
+                                    for dicts in temp_list:
+                                        for kk,vv in dicts.items():
                                             if kk == "server":
-                                                csv_list.append(vv) 
+                                                _temp_srv_list.append(vv)
+                                    csv_list.append(_temp_srv_list[0]+","+_temp_srv_list[1]+","+_temp_srv_list[2])
+                                elif len(temp_list) == 2:
+                                    _temp_srv_list = []
+                                    for dicts in temp_list:
+                                        for kk,vv in dicts.items():
+                                            if kk == "server":
+                                                _temp_srv_list.append(vv)
+                                    csv_list.append(_temp_srv_list[0]+","+_temp_srv_list[1]+",None")
+                                elif len(temp_list) == 1:
+                                    _temp_srv_list = []
+                                    for dicts in temp_list:
+                                        for kk,vv in dicts.items():
+                                            if kk == "server":
+                                                _temp_srv_list.append(vv)
+                                    csv_list.append(_temp_srv_list[0]+",None,"+",None")
                             else:
-                                csv_list.append("None,None")
+                                csv_list.append("None,None,None")
                         if key == "timezone":
                             csv_list.append(value)
                 if k == "ip":
