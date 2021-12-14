@@ -49,8 +49,8 @@ def workers_head(func_to_call, arg, of):
               
 def cookie(fw, of):
 
-    us = "dpereira"             # change credencials 
-    pss = "Jomafica01!"            # change credencials 
+    us =              # change credencials 
+    pss =            # change credencials 
 
     try:
 
